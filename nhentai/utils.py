@@ -11,25 +11,33 @@ import requests
 
 from nhentai import constant
 from nhentai.logger import logger
+from pathvalidate import sanitize_filename
 
 
 def request(method, url, **kwargs):
     session = requests.Session()
     session.headers.update({
         'Referer': constant.LOGIN_URL,
-        'User-Agent': 'nhentai command line client (https://github.com/RicterZ/nhentai)',
+        'User-Agent':
+        'nhentai command line client (https://github.com/RicterZ/nhentai)',
         'Cookie': constant.COOKIE
     })
-    return getattr(session, method)(url, proxies=constant.PROXY, verify=False, **kwargs)
+    return getattr(session, method)(url,
+                                    proxies=constant.PROXY,
+                                    verify=False,
+                                    **kwargs)
 
 
 def check_cookie():
     response = request('get', constant.BASE_URL).text
     username = re.findall('"/users/\d+/(.*?)"', response)
     if not username:
-        logger.error('Cannot get your username, please check your cookie or use `nhentai --cookie` to set your cookie')
+        logger.error(
+            'Cannot get your username, please check your cookie or use `nhentai --cookie` to set your cookie'
+        )
     else:
-        logger.info('Login successfully! Your username: {}'.format(username[0]))
+        logger.info('Login successfully! Your username: {}'.format(
+            username[0]))
 
 
 class _Singleton(type):
@@ -38,11 +46,12 @@ class _Singleton(type):
 
     def __call__(cls, *args, **kwargs):
         if cls not in cls._instances:
-            cls._instances[cls] = super(_Singleton, cls).__call__(*args, **kwargs)
+            cls._instances[cls] = super(_Singleton,
+                                        cls).__call__(*args, **kwargs)
         return cls._instances[cls]
 
 
-class Singleton(_Singleton(str('SingletonMeta'), (object,), {})):
+class Singleton(_Singleton(str('SingletonMeta'), (object, ), {})):
     pass
 
 
@@ -100,7 +109,9 @@ def generate_html(output_dir='.', doujinshi_obj=None):
             with open(os.path.join(doujinshi_dir, 'index.html'), 'wb') as f:
                 f.write(data.encode('utf-8'))
 
-        logger.log(15, 'HTML Viewer has been write to \'{0}\''.format(os.path.join(doujinshi_dir, 'index.html')))
+        logger.log(
+            15, 'HTML Viewer has been write to \'{0}\''.format(
+                os.path.join(doujinshi_dir, 'index.html')))
     except Exception as e:
         logger.warning('Writen HTML Viewer failed ({})'.format(str(e)))
 
@@ -160,7 +171,8 @@ def generate_main_html(output_dir='./'):
             with open('./main.html', 'wb') as f:
                 f.write(data.encode('utf-8'))
         logger.log(
-            15, 'Main Viewer has been write to \'{0}main.html\''.format(output_dir))
+            15, 'Main Viewer has been write to \'{0}main.html\''.format(
+                output_dir))
     except Exception as e:
         logger.warning('Writen Main Viewer failed ({})'.format(str(e)))
 
@@ -168,7 +180,8 @@ def generate_main_html(output_dir='./'):
 def generate_cbz(output_dir='.', doujinshi_obj=None, rm_origin_dir=False):
     if doujinshi_obj is not None:
         doujinshi_dir = os.path.join(output_dir, doujinshi_obj.filename)
-        cbz_filename = os.path.join(os.path.join(doujinshi_dir, '..'), '{}.cbz'.format(doujinshi_obj.filename))
+        cbz_filename = os.path.join(os.path.join(doujinshi_dir, '..'),
+                                    '{}.cbz'.format(doujinshi_obj.filename))
     else:
         cbz_filename = './doujinshi.cbz'
         doujinshi_dir = '.'
@@ -185,7 +198,9 @@ def generate_cbz(output_dir='.', doujinshi_obj=None, rm_origin_dir=False):
     if rm_origin_dir:
         shutil.rmtree(doujinshi_dir, ignore_errors=True)
 
-    logger.log(15, 'Comic Book CBZ file has been write to \'{0}\''.format(doujinshi_dir))
+    logger.log(
+        15,
+        'Comic Book CBZ file has been write to \'{0}\''.format(doujinshi_dir))
 
 
 def format_filename(s):
@@ -199,11 +214,12 @@ and append a file extension like '.txt', so I avoid the potential of using
 an invalid filename.
 
 """
-    valid_chars = "-_.()[] %s%s" % (string.ascii_letters, string.digits)
-    filename = ''.join(c for c in s if c in valid_chars)
-    if len(filename) > 100:
-        filename = filename[:100] + '...]'
-
-    # Remove [] from filename
-    filename = filename.replace('[]', '')
-    return filename
+    # valid_chars = "-_.()[] %s%s" % (string.ascii_letters, string.digits)
+    # filename = ''.join(c for c in s if c in valid_chars)
+    # if len(filename) > 100:
+    #     filename = filename[:100] + '...]'
+    #
+    # # Remove [] from filename
+    # filename = filename.replace('[]', '')
+    # return filename
+    return sanitize_filename(s)

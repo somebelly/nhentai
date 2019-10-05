@@ -7,7 +7,6 @@ import re
 import platform
 import sys
 
-
 if platform.system() == 'Windows':
     import ctypes
     import ctypes.wintypes
@@ -15,7 +14,9 @@ if platform.system() == 'Windows':
     # Reference: https://gist.github.com/vsajip/758430
     #            https://github.com/ipython/ipython/issues/4252
     #            https://msdn.microsoft.com/en-us/library/windows/desktop/ms686047%28v=vs.85%29.aspx
-    ctypes.windll.kernel32.SetConsoleTextAttribute.argtypes = [ctypes.wintypes.HANDLE, ctypes.wintypes.WORD]
+    ctypes.windll.kernel32.SetConsoleTextAttribute.argtypes = [
+        ctypes.wintypes.HANDLE, ctypes.wintypes.WORD
+    ]
     ctypes.windll.kernel32.SetConsoleTextAttribute.restype = ctypes.wintypes.BOOL
 
 
@@ -70,22 +71,22 @@ class ColorizingStreamHandler(logging.StreamHandler):
         except:
             self.handleError(record)
 
-
     if not platform.system() == 'Windows':
+
         def output_colorized(self, message):
             self.stream.write(message)
     else:
         ansi_esc = re.compile(r'\x1b\[((?:\d+)(?:;(?:\d+))*)m')
 
         nt_color_map = {
-            0: 0x00,    # black
-            1: 0x04,    # red
-            2: 0x02,    # green
-            3: 0x06,    # yellow
-            4: 0x01,    # blue
-            5: 0x05,    # magenta
-            6: 0x03,    # cyan
-            7: 0x07,    # white
+            0: 0x00,  # black
+            1: 0x04,  # red
+            2: 0x02,  # green
+            3: 0x06,  # yellow
+            4: 0x01,  # blue
+            5: 0x05,  # magenta
+            6: 0x03,  # cyan
+            7: 0x07,  # white
         }
 
         def output_colorized(self, message):
@@ -97,7 +98,7 @@ class ColorizingStreamHandler(logging.StreamHandler):
             if fd is not None:
                 fd = fd()
 
-                if fd in (1, 2): # stdout or stderr
+                if fd in (1, 2):  # stdout or stderr
                     h = ctypes.windll.kernel32.GetStdHandle(-10 - fd)
 
             while parts:
@@ -122,13 +123,14 @@ class ColorizingStreamHandler(logging.StreamHandler):
                             elif 30 <= p <= 37:
                                 color |= self.nt_color_map[p - 30]
                             elif p == 1:
-                                color |= 0x08 # foreground intensity on
-                            elif p == 0: # reset to default color
+                                color |= 0x08  # foreground intensity on
+                            elif p == 0:  # reset to default color
                                 color = 0x07
                             else:
-                                pass # error condition ignored
+                                pass  # error condition ignored
 
-                        ctypes.windll.kernel32.SetConsoleTextAttribute(h, color)
+                        ctypes.windll.kernel32.SetConsoleTextAttribute(
+                            h, color)
 
     def colorize(self, message, record):
         if record.levelno in self.level_map and self.is_tty:
@@ -151,8 +153,8 @@ class ColorizingStreamHandler(logging.StreamHandler):
                 else:
                     prefix = ""
 
-                message = "%s%s" % (prefix, ''.join((self.csi, ';'.join(params),
-                                    'm', message, self.reset)))
+                message = "%s%s" % (prefix, ''.join(
+                    (self.csi, ';'.join(params), 'm', message, self.reset)))
 
         return message
 
@@ -164,12 +166,13 @@ class ColorizingStreamHandler(logging.StreamHandler):
 logging.addLevelName(15, "INFO")
 logger = logging.getLogger('nhentai')
 LOGGER_HANDLER = ColorizingStreamHandler(sys.stdout)
-FORMATTER = logging.Formatter("\r[%(asctime)s] [%(levelname)s] %(message)s", "%H:%M:%S")
+FORMATTER = logging.Formatter("\r[%(asctime)s] [%(levelname)s] %(message)s",
+                              "%H:%M:%S")
 LOGGER_HANDLER.setFormatter(FORMATTER)
 LOGGER_HANDLER.level_map[logging.getLevelName("INFO")] = (None, "cyan", False)
 logger.addHandler(LOGGER_HANDLER)
-logger.setLevel(logging.DEBUG)
-
+# logger.setLevel(logging.DEBUG)
+logger.setLevel(logging.ERROR)
 
 if __name__ == '__main__':
     logger.log(15, 'nhentai')
